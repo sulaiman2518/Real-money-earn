@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Earn Money Zone</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f7f7f7;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    .container {
+      padding: 20px;
+    }
+    h1 {
+      color: #333;
+    }
+    .ad-container {
+      margin-top: 20px;
+    }
+    button, select {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    select {
+      width: 200px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Earn Money Zone</h1>
+    <div id="userData">Loading user info...</div>
+    <div id="balance">Balance: Loading...</div>
+
+    <div class="ad-container">
+      <script src="//libtl.com/sdk.js" data-zone="9637020" data-sdk="show_9637020"></script>
+    </div>
+
+    <select id="paymentMethod">
+      <option value="bkash">Bkash</option>
+      <option value="nagad">Nagad</option>
+    </select>
+
+    <br/>
+
+    <button id="earnBtn">I Watched Ad (Earn)</button>
+    <button id="withdrawBtn">Withdraw</button>
+  </div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    const user = tg.initDataUnsafe.user;
+
+    if (user) {
+      document.getElementById("userData").innerHTML = \`
+        👤 <strong>@\${user.username || 'N/A'}</strong><br>
+        ID: \${user.id}<br>
+        Name: \${user.first_name} \${user.last_name || ''}
+      \`;
+
+      fetch("https://your-backend-url.com/balance?telegram_id=" + user.id)
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("balance").innerText = "Balance: " + data.balance + " BDT";
+        });
+
+      document.getElementById("earnBtn").onclick = () => {
+        fetch("https://your-backend-url.com/earn", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ telegram_id: user.id })
+        }).then(res => res.json()).then(data => {
+          alert(data.message);
+          location.reload();
+        });
+      };
+
+      document.getElementById("withdrawBtn").onclick = () => {
+        const method = document.getElementById('paymentMethod').value;
+
+        fetch("https://your-backend-url.com/withdraw", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            telegram_id: user.id,
+            username: user.username,
+            name: user.first_name + " " + (user.last_name || ""),
+            method: method
+          })
+        }).then(res => res.json()).then(data => {
+          alert(data.message);
+        }).catch(() => alert("Error! Try again."));
+      };
+
+    } else {
+      document.getElementById("userData").innerText = "Telegram user not found.";
+    }
+  </script>
+</body>
+</html>
